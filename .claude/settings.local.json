@@ -3,7 +3,8 @@
     "allow": [
       "Read(//c/Users/Alex/OneDrive - University of Victoria/temp/nauticapedia/vessels_lookup/**)",
       "Bash(curl \"http://localhost/crud/api/autocomplete.php?field=Fate&term=a\")",
-      "Bash(curl \"http://localhost/crud/api/vessels.php?search=test&page=1&limit=50\")"
+      "Bash(curl \"http://localhost/crud/api/vessels.php?search=test&page=1&limit=50\")",
+      "Bash(git config:*)"
     ],
     "deny": [],
     "ask": []
