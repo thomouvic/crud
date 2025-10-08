@@ -1,3 +1,12 @@
+<?php
+session_start();
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,7 +25,16 @@
 </head>
 <body>
     <div class="container-fluid mt-4">
-        <h1 class="mb-4">Nauticapedia Vessel Database</h1>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Nauticapedia Vessel Database</h1>
+            <div>
+                <span class="me-3">Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?></span>
+                <?php if ($_SESSION['username'] === 'admin'): ?>
+                    <a href="admin.php" class="btn btn-sm btn-primary">User Management</a>
+                <?php endif; ?>
+                <button class="btn btn-sm btn-secondary" id="logoutBtn">Logout</button>
+            </div>
+        </div>
 
         <div class="row mb-3">
             <div class="col-md-6">

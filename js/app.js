@@ -25,6 +25,18 @@ $(document).ready(function() {
     $('#refreshBtn').click(() => loadVessels());
 
     $('#saveBtn').click(saveVessel);
+
+    $('#logoutBtn').click(function() {
+        $.ajax({
+            url: 'api/users.php',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ action: 'logout' }),
+            success: function() {
+                window.location.href = 'login.php';
+            }
+        });
+    });
 });
 
 function initAutocomplete() {
@@ -188,22 +200,31 @@ function changePage(page) {
 }
 
 function viewVessel(id) {
-    editVessel(id);
-    $('#vesselForm :input').prop('disabled', true);
-    $('#saveBtn').hide();
-    $('#modalTitle').text('View Vessel');
+    loadVesselData(id, true);
 }
 
 function editVessel(id) {
+    loadVesselData(id, false);
+}
+
+function loadVesselData(id, isViewMode) {
     $.ajax({
         url: 'api/vessels.php',
         method: 'GET',
         data: { id: id },
         success: function(vessel) {
-            $('#modalTitle').text('Edit Vessel');
+            console.log('Loaded vessel data:', vessel);
+            $('#modalTitle').text(isViewMode ? 'View Vessel' : 'Edit Vessel');
             $('#vesselForm')[0].reset();
-            $('#vesselForm :input').prop('disabled', false);
-            $('#saveBtn').show();
+            $('#vesselForm :input').prop('disabled', isViewMode);
+            if (isViewMode) {
+                $('#saveBtn').hide();
+            } else {
+                $('#saveBtn').show();
+            }
+
+            // Set the vessel ID for editing
+            $('#vessel_id').val(vessel.id);
 
             // Populate form fields
             Object.keys(vessel).forEach(key => {
@@ -212,8 +233,28 @@ function editVessel(id) {
                     if (field.attr('type') === 'checkbox') {
                         // Handle checkboxes (bit fields stored as Buffer objects or 0/1)
                         const value = vessel[key];
-                        const isChecked = value === 1 || value === '1' || (value && value[0] === 1);
+                        let isChecked = false;
+
+                        if (value !== null && value !== undefined) {
+                            // Handle Buffer objects (bit fields from MySQL)
+                            if (value.type === 'Buffer' && Array.isArray(value.data)) {
+                                isChecked = value.data[0] === 1;
+                            } else if (typeof value === 'object' && Array.isArray(value)) {
+                                isChecked = value[0] === 1;
+                            } else {
+                                isChecked = value === 1 || value === '1' || value === true;
+                            }
+                        }
+
                         field.prop('checked', isChecked);
+                    } else if (field.attr('type') === 'date' && vessel[key]) {
+                        // Handle date fields - convert datetime to date format (YYYY-MM-DD)
+                        const dateValue = vessel[key];
+                        if (dateValue) {
+                            // Extract just the date part (YYYY-MM-DD) from datetime
+                            const dateOnly = dateValue.split('T')[0].split(' ')[0];
+                            field.val(dateOnly);
+                        }
                     } else if (key === 'Image_Owner' && vessel[key]) {
                         // For Image_Owner, fetch the name from the ID
                         $.ajax({
@@ -244,16 +285,20 @@ function editVessel(id) {
 function saveVessel() {
     const formData = {};
 
-    // Get all form fields
+    // Get all form fields (excluding checkboxes, we'll handle those separately)
     $('#vesselForm').serializeArray().forEach(item => {
-        if (item.value !== '') {
+        if (item.value !== '' && $(`#${item.name}`).attr('type') !== 'checkbox') {
             formData[item.name] = item.value;
         }
     });
 
     // Handle checkboxes separately (they're only in serializeArray if checked)
-    $('input[type=checkbox]').each(function() {
-        formData[$(this).attr('name')] = $(this).is(':checked') ? 1 : 0;
+    $('#vesselForm input[type=checkbox]').each(function() {
+        const name = $(this).attr('name');
+        const isChecked = $(this).is(':checked');
+        const value = isChecked ? 1 : 0;
+        formData[name] = value;
+        console.log(`Checkbox ${name}: checked=${isChecked} value=${value}`);
     });
 
     // Convert Image_Owner name to ID
@@ -266,19 +311,26 @@ function saveVessel() {
     }
 
     const id = $('#vessel_id').val();
+    if (id) {
+        formData.id = id;
+    }
     const method = id ? 'PUT' : 'POST';
+
+    console.log('Saving vessel with data:', formData);
 
     $.ajax({
         url: 'api/vessels.php',
         method: method,
         contentType: 'application/json',
         data: JSON.stringify(formData),
-        success: function() {
+        success: function(response) {
+            console.log('Save response:', response);
             vesselModal.hide();
             loadVessels();
             alert('Vessel saved successfully!');
         },
         error: function(xhr) {
+            console.error('Save error:', xhr);
             alert('Error saving vessel: ' + (xhr.responseJSON?.error || 'Unknown error'));
         }
     });
