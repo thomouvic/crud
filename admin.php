@@ -44,6 +44,7 @@ $users = $stmt->fetchAll();
             <h1>User Management</h1>
             <div>
                 <a href="index.php" class="btn btn-primary">Back to Vessels</a>
+                <a href="change_password.php" class="btn btn-info">Change Password</a>
                 <button class="btn btn-secondary" onclick="location.href='login.php'">Logout</button>
             </div>
         </div>

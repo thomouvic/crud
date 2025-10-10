@@ -116,6 +116,55 @@ try {
                 session_destroy();
                 echo json_encode(['success' => true]);
 
+            } elseif ($action === 'change_password') {
+                // Change password - requires login
+                if (!isset($_SESSION['user_id'])) {
+                    http_response_code(401);
+                    echo json_encode(['error' => 'Not logged in']);
+                    break;
+                }
+
+                $currentPassword = $data['current_password'] ?? '';
+                $newPassword = $data['new_password'] ?? '';
+
+                // Validation
+                if (empty($currentPassword) || empty($newPassword)) {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'Current password and new password are required']);
+                    break;
+                }
+
+                if (strlen($newPassword) < 8) {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'New password must be at least 8 characters']);
+                    break;
+                }
+
+                // Get current user
+                $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE id = ?");
+                $stmt->execute([$_SESSION['user_id']]);
+                $user = $stmt->fetch();
+
+                if (!$user) {
+                    http_response_code(404);
+                    echo json_encode(['error' => 'User not found']);
+                    break;
+                }
+
+                // Verify current password
+                if (!password_verify($currentPassword, $user['password_hash'])) {
+                    http_response_code(401);
+                    echo json_encode(['error' => 'Current password is incorrect']);
+                    break;
+                }
+
+                // Update password
+                $newPasswordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+                $stmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
+                $stmt->execute([$newPasswordHash, $_SESSION['user_id']]);
+
+                echo json_encode(['success' => true, 'message' => 'Password changed successfully']);
+
             } else {
                 http_response_code(400);
                 echo json_encode(['error' => 'Invalid action']);

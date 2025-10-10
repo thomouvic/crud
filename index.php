@@ -29,6 +29,7 @@ if (!isset($_SESSION['user_id'])) {
             <h1>Nauticapedia Vessel Database</h1>
             <div>
                 <span class="me-3">Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?></span>
+                <a href="change_password.php" class="btn btn-sm btn-info">Change Password</a>
                 <?php if ($_SESSION['username'] === 'admin'): ?>
                     <a href="admin.php" class="btn btn-sm btn-primary">User Management</a>
                 <?php endif; ?>
