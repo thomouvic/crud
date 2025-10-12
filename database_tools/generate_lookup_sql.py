@@ -2,7 +2,7 @@
 import pyodbc
 
 # Connect to Access database
-db_path = r'c:\Users\Alex Thomo\OneDrive - University of Victoria\temp\nauticapedia\crud\vessels_sample.accdb'
+db_path = r'c:\Users\Alex Thomo\OneDrive - University of Victoria\temp\nauticapedia\crud\database_tools\vessels_sample.accdb'
 conn_str = (
     r'DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};'
     f'DBQ={db_path};'
@@ -35,9 +35,28 @@ for table_name in sorted(lookup_tables):
     sql_output.append(f"TRUNCATE TABLE {table_name};")
 
     if rows:
+        # Map to standardized column names
+        # All lookup tables use 'value' column, except lkuImageOwner which has 'id' and 'value'
+        if table_name == 'lkuImageOwner':
+            target_columns = ['id', 'value']
+        else:
+            target_columns = ['value']
+
         for row in rows:
             values = []
-            for val in row:
+            # Only use the relevant columns (skip ID for non-ImageOwner tables)
+            row_values = list(row)
+            if table_name == 'lkuImageOwner':
+                # Use both ID and the value column
+                row_values = row_values[:2]  # Take first 2 columns
+            else:
+                # Skip ID column if it exists, take only the first non-ID column
+                if len(columns) > 1:
+                    row_values = [row_values[-1]]  # Take last column (usually the data column)
+                else:
+                    row_values = [row_values[0]]  # Take first column
+
+            for val in row_values:
                 if val is None:
                     values.append('NULL')
                 elif isinstance(val, str):
@@ -49,7 +68,7 @@ for table_name in sorted(lookup_tables):
                 else:
                     values.append(f"'{str(val)}'")
 
-            sql_output.append(f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({', '.join(values)});")
+            sql_output.append(f"INSERT INTO {table_name} ({', '.join(target_columns)}) VALUES ({', '.join(values)});")
 
 conn.close()
 

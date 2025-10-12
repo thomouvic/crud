@@ -1,0 +1,14 @@
+# Session files
+tmp/
+
+# Database tools and large files
+database_tools/vessels_sample.accdb
+
+# IDE files
+.vscode/
+.idea/
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db

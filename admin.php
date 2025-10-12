@@ -1,4 +1,5 @@
 <?php
+require_once 'config/session.php';
 session_start();
 
 // Simple admin check - you can enhance this later

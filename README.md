@@ -22,20 +22,25 @@ cd crud
 
 ### 2. Configure the database
 
-Copy the example database configuration and edit with your credentials:
+Edit `config/database.php` with your production database credentials:
 
-```bash
-cp config/database.example.php config/database.php
-```
-
-Edit `config/database.php` with your database credentials:
-
+**For local development (XAMPP):** The default values work out of the box:
 ```php
-$host = 'localhost';              // Your database host
-$db = 'your_database_name';       // Your database name
-$user = 'your_username';          // Your database username
-$pass = 'your_password';          // Your database password
+$host = 'localhost';
+$db = 'nautiedj_directus11';
+$user = 'root';
+$pass = '';  // Empty password for XAMPP
 ```
+
+**For production server:** Update with your hosting credentials:
+```php
+$host = 'localhost';
+$db = 'your_production_database';
+$user = 'your_production_user';
+$pass = 'your_production_password';
+```
+
+Note: Local XAMPP credentials are committed to git since they're standard and not a security risk.
 
 ### 3. Create the database tables
 
